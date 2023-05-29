@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33110.190
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "elastic-todo-desktop", "elastic-todo-desktop.vcxproj", "{9E085FBF-0346-419C-B942-A1E32A74FBD3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9E085FBF-0346-419C-B942-A1E32A74FBD3}.Debug|x64.ActiveCfg = Debug|x64
+		{9E085FBF-0346-419C-B942-A1E32A74FBD3}.Debug|x64.Build.0 = Debug|x64
+		{9E085FBF-0346-419C-B942-A1E32A74FBD3}.Release|x64.ActiveCfg = Release|x64
+		{9E085FBF-0346-419C-B942-A1E32A74FBD3}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8B7C078D-EFA0-4C1C-9562-C7AA25E8C594}
+	EndGlobalSection
+EndGlobal

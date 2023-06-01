@@ -2,5 +2,5 @@
 #define UUID_GEN_H
 #include <QUuid>
 #include <QRegularExpression>
-std::string generateUuid();
+inline std::string generateUuid();
 #endif // UUID_GEN_H

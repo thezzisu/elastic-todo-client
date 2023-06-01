@@ -26,9 +26,9 @@ class Event {
 public:
     // �⼸��event���캯����û��tag��һ�����Ҫ���ڼ���ȥ
     // ���µ�set...�������������ݿ�ͬ����
-    Event(DatabaseManager* dbm, const std::string& id, const std::string& title, const std::tm& time,
+    Event(bool init,DatabaseManager* dbm, const std::string& id, const std::string& title, const std::tm& time,
           const std::string& description, const int& urgency, const int& kind_of_event=EVENT);
-    Event(DatabaseManager* dbm, const std::string& id, const std::string& title, const std::tm& time,
+    Event(bool init,DatabaseManager* dbm, const std::string& id, const std::string& title, const std::tm& time,
           const std::string& description, const int& urgency, const int& kind_of_event,
           const std::tm& create_time, const std::tm& finish_time, const std::tm& update_time);
 
@@ -78,6 +78,7 @@ public:
     // ɾ��tag��ɾ���ɹ�����1������0
     bool deleteTag(const std::string& tag);
     bool addTag(const std::string& tag);
+    bool addTag_init(const std::string& tag);
 
 
     DatabaseManager* dbm;
@@ -95,9 +96,9 @@ private:
 
 class RecurringEvent : public Event {
 public:
-    RecurringEvent(DatabaseManager* dbm, const std::string& id, const std::string& title, const std::tm& time,
+    RecurringEvent(bool init,DatabaseManager* dbm, const std::string& id, const std::string& title, const std::tm& time,
                    const std::string& description, const int& urgency, const int& interval);
-    RecurringEvent(DatabaseManager* dbm, const std::string& id, const std::string& title, const std::tm& time,
+    RecurringEvent(bool init,DatabaseManager* dbm, const std::string& id, const std::string& title, const std::tm& time,
                    const std::string& description, const int& urgency, const int& interval, const std::tm& create_time,
                    const std::tm& finish_time, const std::tm& update_time);
     virtual ~RecurringEvent();
@@ -109,9 +110,9 @@ private:
 };
 class DdlEvent : public Event {
 public:
-    DdlEvent(DatabaseManager* dbm, const std::string& id, const std::string& title, const std::tm& time,
+    DdlEvent(bool init,DatabaseManager* dbm, const std::string& id, const std::string& title, const std::tm& time,
              const std::string& description, const int& urgency, const std::tm& deadline);
-    DdlEvent(DatabaseManager* dbm, const std::string& id, const std::string& title, const std::tm& time,
+    DdlEvent(bool init,DatabaseManager* dbm, const std::string& id, const std::string& title, const std::tm& time,
              const std::string& description, const int& urgency, const std::tm& deadline, const std::tm& create_time,
              const std::tm& finish_time, const std::tm& update_time);
     virtual ~DdlEvent();
@@ -123,9 +124,9 @@ private:
 };
 class ProjectEvent : public Event {
 public:
-    ProjectEvent(DatabaseManager* dbm, const std::string& id, const std::string& title, const std::tm& time,
+    ProjectEvent(bool init,DatabaseManager* dbm, const std::string& id, const std::string& title, const std::tm& time,
                  const std::string& description, const int& urgency);
-    ProjectEvent(DatabaseManager* dbm, const std::string& id, const std::string& title, const std::tm& time,
+    ProjectEvent(bool init,DatabaseManager* dbm, const std::string& id, const std::string& title, const std::tm& time,
                  const std::string& description, const int& urgency, const std::tm& create_time,
                  const std::tm& finish_time, const std::tm& update_time);
     virtual ~ProjectEvent();
@@ -181,10 +182,11 @@ private:
 
 class Category {
 public:
-    Category(DatabaseManager* dbm, const std::string& id, const std::string& tag);
-    Category(DatabaseManager* dbm, const std::string& tag);
+    Category(bool init,DatabaseManager* dbm, const std::string& id, const std::string& tag);
+    Category(bool init,DatabaseManager* dbm, const std::string& tag);
     ~Category();
     bool addEvent(Event* event);
+    bool addEvent_init(Event* event);
     bool deleteEvent(Event* event);
     void displayEvents() const;
     void displayEvent(Event* event) const;

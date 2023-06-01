@@ -18,6 +18,7 @@ SOURCES += \
     uuid_gen.cpp
 
 HEADERS += \
+    connect.h \
     databasemanager.h \
     event.h \
     mapper.h \

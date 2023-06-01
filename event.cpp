@@ -2,7 +2,7 @@
 #include"databaseManager.h"
 #include<ctime>
 
-Event::Event(DatabaseManager* dbm, const std::string& id, const std::string& title, const std::tm& time,
+Event::Event(bool init,DatabaseManager* dbm, const std::string& id, const std::string& title, const std::tm& time,
              const std::string& description, const int& urgency, const int& kind_of_event):
     dbm(dbm),
     id(id),
@@ -12,10 +12,10 @@ Event::Event(DatabaseManager* dbm, const std::string& id, const std::string& tit
     urgency(urgency),
     kind_of_event(kind_of_event)
 {
-    if(kind_of_event==EVENT)
+    if(kind_of_event==EVENT&&!init)
         dbm->addEvent(this);
 }
-Event::Event(DatabaseManager* dbm, const std::string& id, const std::string& title, const std::tm& time,
+Event::Event(bool init,DatabaseManager* dbm, const std::string& id, const std::string& title, const std::tm& time,
              const std::string& description, const int& urgency, const int& kind_of_event,
              const std::tm& create_time, const std::tm& finish_time, const std::tm& update_time) :
     dbm(dbm),
@@ -29,12 +29,12 @@ Event::Event(DatabaseManager* dbm, const std::string& id, const std::string& tit
     finish_time(finish_time),
     update_time(update_time)
 {
-    if (kind_of_event == EVENT)
+    if (kind_of_event == EVENT&&!init)
         dbm->addEvent(this);
 }
 
 Event::~Event(){
-    dbm->delEvent(this);
+    //dbm->delEvent(this);
 }
 
 std::string Event::getId()const{return id;}
@@ -119,6 +119,10 @@ bool Event:: addTag(const std::string& tag){
     tags.insert(tag);
     return dbm->modEvent(this);
 }
+bool Event:: addTag_init(const std::string& tag){
+    tags.insert(tag);
+    return true;
+}
 bool Event:: setTitle(const std::string& title){
     this->title = title;
     return dbm->modEvent(this);
@@ -156,19 +160,21 @@ bool Event::operator<(const Event& event) const {
 
 
 
-RecurringEvent::RecurringEvent(DatabaseManager* dbm, const std::string& id, const std::string& title, const std::tm& time,
+RecurringEvent::RecurringEvent(bool init,DatabaseManager* dbm, const std::string& id, const std::string& title, const std::tm& time,
                                const std::string& description, const int& urgency, const int& interval) :
-    Event(dbm, id, title, time, description, urgency, RECURRING), interval(interval) {
-    dbm->addEvent((Event*)this);
+    Event(init,dbm, id, title, time, description, urgency, RECURRING), interval(interval) {
+    if (!init)
+        dbm->addEvent((Event*)this);
 }
-RecurringEvent::RecurringEvent(DatabaseManager* dbm, const std::string& id, const std::string& title, const std::tm& time,
+RecurringEvent::RecurringEvent(bool init,DatabaseManager* dbm, const std::string& id, const std::string& title, const std::tm& time,
                                const std::string& description, const int& urgency, const int& interval, const std::tm& create_time,
                                const std::tm& finish_time, const std::tm& update_time) :
-    Event(dbm, id, title, time, description, urgency, RECURRING, create_time, finish_time, update_time), interval(interval) {
-    dbm->addEvent((Event*)this);
+    Event(init,dbm, id, title, time, description, urgency, RECURRING, create_time, finish_time, update_time), interval(interval) {
+    if (!init)
+        dbm->addEvent((Event*)this);
 }
 RecurringEvent:: ~RecurringEvent(){
-    dbm->delEvent((Event*)this);
+    //dbm->delEvent((Event*)this);
 }
 int RecurringEvent:: getInterval() const{
     return interval;
@@ -182,19 +188,21 @@ bool RecurringEvent::setInterval(int interval){
 
 
 
-DdlEvent::DdlEvent(DatabaseManager* dbm, const std::string& id, const std::string& title, const std::tm& time,
+DdlEvent::DdlEvent(bool init,DatabaseManager* dbm, const std::string& id, const std::string& title, const std::tm& time,
                    const std::string& description, const int& urgency, const std::tm& deadline) :
-    Event(dbm, id, title, time, description, urgency, DDL), deadline(deadline) {
+    Event(init,dbm, id, title, time, description, urgency, DDL), deadline(deadline) {
+    if (!init)
     dbm->addEvent((Event*)this);
 }
-DdlEvent::DdlEvent(DatabaseManager* dbm, const std::string& id, const std::string& title, const std::tm& time,
+DdlEvent::DdlEvent(bool init,DatabaseManager* dbm, const std::string& id, const std::string& title, const std::tm& time,
                    const std::string& description, const int& urgency, const std::tm& deadline, const std::tm& create_time,
                    const std::tm& finish_time, const std::tm& update_time) :
-    Event(dbm, id, title, time, description, urgency, DDL, create_time, finish_time, update_time), deadline(deadline) {
+    Event(init,dbm, id, title, time, description, urgency, DDL, create_time, finish_time, update_time), deadline(deadline) {
+    if (!init)
     dbm->addEvent((Event*)this);
 }
 DdlEvent:: ~DdlEvent(){
-    dbm->delEvent((Event*)this);
+    //dbm->delEvent((Event*)this);
 }
 std::tm DdlEvent:: getDeadline() const{
     return deadline;
@@ -205,19 +213,21 @@ bool DdlEvent:: setDeadline(const std::tm& deadline){
 }
 
 
-ProjectEvent::ProjectEvent(DatabaseManager* dbm, const std::string& id, const std::string& title, const std::tm& time,
+ProjectEvent::ProjectEvent(bool init,DatabaseManager* dbm, const std::string& id, const std::string& title, const std::tm& time,
                            const std::string& description, const int& urgency) :
-    Event(dbm, id, title, time, description, urgency, PROJECT) {
+    Event(init,dbm, id, title, time, description, urgency, PROJECT) {
+    if (!init)
     dbm->addEvent((Event*)this);
 }
-ProjectEvent::ProjectEvent(DatabaseManager* dbm, const std::string& id, const std::string& title, const std::tm& time,
+ProjectEvent::ProjectEvent(bool init,DatabaseManager* dbm, const std::string& id, const std::string& title, const std::tm& time,
                            const std::string& description, const int& urgency, const std::tm& create_time,
                            const std::tm& finish_time, const std::tm& update_time) :
-    Event(dbm, id, title, time, description, urgency, PROJECT, create_time, finish_time, update_time) {
+    Event(init,dbm, id, title, time, description, urgency, PROJECT, create_time, finish_time, update_time) {
+    if (!init)
     dbm->addEvent((Event*)this);
 }
 ProjectEvent:: ~ProjectEvent(){
-    dbm->delEvent((Event*)this);
+    //dbm->delEvent((Event*)this);
 }
 std::set<Event*> ProjectEvent:: getSubEvents() const{
     return subEvents;
@@ -227,14 +237,16 @@ bool ProjectEvent:: addSubEvent(Event* event){
         return 0;
     }
     subEvents.insert(event);
-    return dbm->modEvent((Event*)this);
+    dbm->addeventevent(this,event);
+    return true;
 }
 bool ProjectEvent:: deleteSubEvent(Event* event){
     if(subEvents.find(event)==subEvents.end()){
         return 0;
     }
+    dbm->deleventevent(this,event);
     subEvents.erase(event);
-    return dbm->modEvent((Event*)this);
+    return true;
 }
 
 std::set<Event*> ProjectEvent:: getFatherEvent() const{
@@ -245,14 +257,16 @@ bool ProjectEvent:: addFatherEvent(Event* event){
         return 0;
     }
     fatherEvents.insert(event);
-    return dbm->modEvent((Event*)this);
+    dbm->addeventevent(event,this);
+    return true;
 }
 bool ProjectEvent:: deleteFatherEvent(Event* event){
     if(fatherEvents.find(event)==subEvents.end()){
         return 0;
     }
     subEvents.erase(event);
-    return dbm->modEvent((Event*)this);
+    dbm->addeventevent(event,this);
+    return true;
 }
 
 long long int timeComparer(std::tm _tm1, std::tm _tm2) {
@@ -387,19 +401,25 @@ std::set<Event*>& Calendar:: getAllEvents(){
 
 
 // û���ҵ������ݿ�������/ɾ��/���ĵĽӿ�
-Category::Category(DatabaseManager* dbm, const std::string& tag) {
+Category::Category(bool init, DatabaseManager* dbm, const std::string& tag) {
     this->dbm = dbm;
     this->tag = tag;
-    dbm->addCategory(this);
+    if (!init)
+    {
+        dbm->addCategory(this);
+    }
 }
-Category::Category(DatabaseManager* dbm, const std::string& id, const std::string& tag) {
+Category::Category(bool init, DatabaseManager* dbm, const std::string& id, const std::string& tag) {
     this->dbm = dbm;
     this->tag = tag;
     this->id = id;
-    dbm->addCategory(this);
+    if (!init)
+    {
+        dbm->addCategory(this);
+    }
 }
 Category::~Category() {
-    dbm->delCategory(this);
+    //dbm->delCategory(this);
 }
 std::string Category:: getId() const{
     return id;
@@ -421,6 +441,14 @@ bool Category:: addEvent(Event* event){
     }
     events.insert(event);
     return dbm->modCategory(this);
+}
+bool Category::addEvent_init(Event* event)
+{
+    if(events.find(event)!=events.end()){
+        return 0;
+    }
+    events.insert(event);
+    return true;
 }
 bool Category:: deleteEvent(Event* event){
     if(events.find(event)==events.end()){

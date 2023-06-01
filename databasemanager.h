@@ -40,6 +40,9 @@ public:
     //event with cate
     bool addeventcate(Event* event,Category * category);
     bool deleventcate(Event* event,Category * category);
+    //event with relations
+    bool addeventevent(Event* father,Event * son);
+    bool deleventevent(Event* father,Event * son);
     // only for initialization
     bool init_for_local();
     // for convenient queries

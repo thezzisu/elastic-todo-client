@@ -12,6 +12,7 @@
 #include "uuid_gen.h"
 #include "databasemanager.h"
 #include "time_convert.h"
+#include "connect.h"
     CrowServerThread::CrowServerThread(int port_)
     {
         event_map = new EventMapper();
@@ -30,11 +31,11 @@
     void CrowServerThread::run(){
         crow::SimpleApp app;
         //open another driver for the service thread
-        dbm = new DatabaseManager("103.140.229.50",3306,"stu2100012734","stu2100012734",
-                                  "stu2100012734",event_map,category_map,eventorganizer,cateorganizer);
+        dbm = new DatabaseManager(DBADDR,DBPORT,DBUSERNAME,DBPASSWORD,
+                                  DBDATABASE,event_map,category_map,eventorganizer,cateorganizer);
         if (!dbm->init_for_local())
             qDebug()<<"DB (another Thread) error";
-
+        // a test for server
         CROW_ROUTE(app, "/multiply/<int>/<int>")
         ([](const crow::request& req, int a, int b){
             crow::json::wvalue x;
@@ -95,7 +96,7 @@
                 // get the name
                 std::string displayName = body["displayName"].s();
                 std::string temp_uuid = generateUuid();
-                Category * new_cate = new Category(dbm,temp_uuid,displayName);
+                Category * new_cate = new Category(false,dbm,temp_uuid,displayName);
                 cateorganizer->addCategory(temp_uuid,new_cate);
 
                 category_map->addMapping(temp_uuid,new_cate);
@@ -103,7 +104,7 @@
                 crow::json::wvalue x;
                 x["id"] = todoList->getId();
                 x["displayName"] = todoList->getTag();
-                return crow::response(200, x);
+                return crow::response(201, x);
             });
         /* Edify Category */
         CROW_ROUTE(app, "/me/todo/lists/<string>").methods("PATCH"_method)
@@ -142,10 +143,11 @@
 
                 if ((category_map->CategoryidExists)(todoTaskListId)) {
                     cateorganizer->deleteCategory(todoTaskListId);
+                    dbm->delCategory(category_map->getCategory(todoTaskListId));
                     category_map->removeMapping(todoTaskListId);
                     crow::json::wvalue x;
                     x["suc"] = "suc no content";
-                    return crow::response(200,x);
+                    return crow::response(204,x);
                 } else {
                     crow::json::wvalue error;
                     error["error"] = "Todo list not found";
@@ -233,7 +235,7 @@
 
                 std::string new_uuid = generateUuid();
                 int kindoftype = EVENT;
-                Event* newTask = new Event(dbm,new_uuid,title,isoToTm(dueAt),description,importance,
+                Event* newTask = new Event(false,dbm,new_uuid,title,isoToTm(dueAt),description,importance,
                                            kindoftype,isoToTm(createdAt),isoToTm(finishedAt),isoToTm(updatedAt));
                 Category* thecate = category_map->getCategory(todoTaskListId);
                 thecate->addEvent(newTask);
@@ -251,7 +253,7 @@
                 x["finishedAt"] = convertToQDateTime(newTask->getFinishTime()).toString(Qt::ISODate).toStdString();
                 x["updatedAt"] = convertToQDateTime(newTask->getUpdateTime()).toString(Qt::ISODate).toStdString();
 
-                return crow::response(200, x);
+                return crow::response(201, x);
             });
 
 
@@ -277,13 +279,21 @@
                 }
                 Event* eventToUpdate = event_map->getEvent(taskId);
                 if (eventToUpdate) {
-                    eventToUpdate->setTitle(title);
-                    eventToUpdate->setDescription(description);
-                    eventToUpdate->setCreateTime(isoToTm(createdAt));
-                    eventToUpdate->setDeadline(isoToTm(dueAt));
-                    eventToUpdate->setFinishTime(isoToTm(finishedAt));
-                    eventToUpdate->setUpdateTime(isoToTm(updatedAt));
-                    eventToUpdate->setUrgency(urgency);
+                    // save the sql resources
+                    if (eventToUpdate->getTitle()!=title)
+                        eventToUpdate->setTitle(title);
+                    if (eventToUpdate->getDescription()!=description)
+                        eventToUpdate->setDescription(description);
+                    if (tmToIso(eventToUpdate->getCreateTime())!=createdAt)
+                        eventToUpdate->setCreateTime(isoToTm(createdAt));
+                    if (tmToIso(eventToUpdate->getTime())!=dueAt)
+                        eventToUpdate->setTime(isoToTm(dueAt));
+                    if (tmToIso(eventToUpdate->getFinishTime())!=finishedAt)
+                        eventToUpdate->setFinishTime(isoToTm(finishedAt));
+                    if (tmToIso(eventToUpdate->getUpdateTime())!=updatedAt)
+                        eventToUpdate->setUpdateTime(isoToTm(updatedAt));
+                    if (eventToUpdate->getUrgency()!=urgency)
+                        eventToUpdate->setUrgency(urgency);
                 }
 
                 crow::json::wvalue updatedTask;
@@ -291,17 +301,17 @@
                 updatedTask["title"] = eventToUpdate->getTitle();
                 updatedTask["description"] = eventToUpdate->getDescription();
                 updatedTask["createdAt"] = tmToIso(eventToUpdate->getCreateTime());
-                updatedTask["dueAt"] = tmToIso(eventToUpdate->getDeadline());
+                updatedTask["dueAt"] = tmToIso(eventToUpdate->getTime());
                 updatedTask["finishedAt"] = tmToIso(eventToUpdate->getFinishTime());
                 updatedTask["updatedAt"] = tmToIso(eventToUpdate->getUpdateTime());
-
+                updatedTask["importance"] = eventToUpdate->getUrgency();
                 return crow::response(200, updatedTask);
             });
 
 
         CROW_ROUTE(app, "/me/todo/lists/<string>/tasks/<string>").methods("DELETE"_method)
             ([&](const std::string& todoTaskListId, const std::string& taskId){
-                if (event_map->EventidExists(taskId))
+            if (event_map->EventidExists(taskId)&&category_map->CategoryidExists(todoTaskListId))
                 {//can find the task
                     Event * del_event = event_map->getEvent(taskId);
                     Category * thecate = category_map->getCategory(todoTaskListId);
@@ -311,13 +321,14 @@
                     event_map->removeMapping(taskId);
                     crow::json::wvalue suc;
                     suc["suc"]="suc no content";
+                    dbm->delEvent(del_event);
                     delete del_event;
-                    return crow::response(200,suc);
+                    return crow::response(204,suc);
                 }
                 else {
                 // cant find the task
                     crow::json::wvalue error;
-                    error["error"] = "Task not found";
+                    error["error"] = "Task/List not found";
                     return crow::response(404, error);
                 }
             });

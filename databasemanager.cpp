@@ -101,19 +101,19 @@ bool DatabaseManager::init_db_event() {
             Event* new_event;
             switch(kindofevent) {
             case EVENT:
-                new_event = new Event(this,id, name, tm_dueAt, description, urgency,kindofevent, tm_createdAt,
+                new_event = new Event(true,this,id, name, tm_dueAt, description, urgency,kindofevent, tm_createdAt,
                                       tm_finishedAt,tm_updatedAt);
                 break;
             case RECURRING:
-                new_event = new RecurringEvent(this,id, name, tm_dueAt, description, urgency, inter_time, tm_createdAt,
+                new_event = new RecurringEvent(true,this,id, name, tm_dueAt, description, urgency, inter_time, tm_createdAt,
                                                tm_finishedAt,tm_updatedAt);
                 break;
             case DDL:
-                new_event = new DdlEvent(this,id, name, tm_dueAt, description, urgency,tm_dueAt, tm_createdAt,
+                new_event = new DdlEvent(true,this,id, name, tm_dueAt, description, urgency,tm_dueAt, tm_createdAt,
                                          tm_finishedAt,tm_updatedAt);
                 break;
             case PROJECT:
-                new_event = new ProjectEvent(this,id, name, tm_dueAt, description, urgency, tm_createdAt,
+                new_event = new ProjectEvent(true,this,id, name, tm_dueAt, description, urgency, tm_createdAt,
                                              tm_finishedAt,tm_updatedAt);
                 break;
             default:
@@ -144,7 +144,7 @@ bool DatabaseManager::init_db_categories()
             std::string name = query.value(record.indexOf("name")).toString().toStdString();
             std::string description = query.value(record.indexOf("description")).toString().toStdString();
             qDebug()<<uuid<<name<<description;
-            Category* newCategory = new Category(this,uuid, name);
+            Category* newCategory = new Category(true,this,uuid, name);
 
             if (!newCategory)
             {
@@ -197,8 +197,8 @@ bool DatabaseManager::init_db_rel_cate()
             qDebug()<<"Init relation categories"<<event_id<<category_id;
             Event * event_p = event_map->getEvent(event_id);
             Category * category_p = category_map->getCategory(category_id);
-            event_p->addTag(category_id);
-            category_p->addEvent(event_p);
+            event_p->addTag_init(category_id);
+            category_p->addEvent_init(event_p);
         }
         return true;
     }
@@ -296,7 +296,7 @@ bool DatabaseManager::modEvent(Event * event)
     query.bindValue(":kindofevent", event->getKindOfEvent());
     query.bindValue(":description", QString::fromStdString(event->getDescription()));
     query.bindValue(":createdAt", convertToQDateTime(event->getCreateTime()).toString(Qt::ISODate));
-    query.bindValue(":dueAt", convertToQDateTime(event->getDeadline()).toString(Qt::ISODate));
+    query.bindValue(":dueAt", convertToQDateTime(event->getTime()).toString(Qt::ISODate));
     query.bindValue(":finishedAt", convertToQDateTime(event->getFinishTime()).toString(Qt::ISODate));
     query.bindValue(":updatedAt", convertToQDateTime(event->getUpdateTime()).toString(Qt::ISODate));
     query.bindValue(":inter_time", event->getInterval());
@@ -477,6 +477,8 @@ bool DatabaseManager::addCategory(Category* category)
         return false;
     }
     QSqlQuery query(db);
+    qDebug() << "addCategoryr:  "
+             << category->getId()<<category->getTag();
     query.prepare("INSERT IGNORE INTO Categories (id, name) "
                   "VALUES (:id, :name)");
     query.bindValue(":id", QString::fromStdString(category->getId()));
@@ -586,6 +588,41 @@ bool DatabaseManager::deleventcate(Event* event, Category * category)
     query.prepare("DELETE FROM EventCategories WHERE event_id = :event_id AND category_id = :category_id");
     query.bindValue(":event_id", QString::fromStdString(event->getId()));
     query.bindValue(":category_id", QString::fromStdString(category->getId()));
+
+    if (!query.exec()) {
+        qDebug() << "deleventcate error: " << query.lastError();
+        return false;
+    }
+
+    return true;
+}
+bool DatabaseManager::addeventevent(Event* father,Event * son)
+{
+    if (!openDatabase()) {
+        qDebug() << "Database could not be opened!";
+        return false;
+    }
+    QSqlQuery query(db);
+    query.prepare("INSERT INTO EventRelations (father_id, child_id) VALUES (:father_id, :child_id)");
+    query.bindValue(":father_id", QString::fromStdString(father->getId()));
+    query.bindValue(":child_id", QString::fromStdString(son->getId()));
+
+    if (!query.exec()) {
+        qDebug() << "addeventcate error: " << query.lastError();
+        return false;
+    }
+
+    return true;
+}
+bool DatabaseManager::deleventevent(Event* father,Event * son){
+    if (!openDatabase()) {
+        qDebug() << "Database could not be opened!";
+        return false;
+    }
+    QSqlQuery query(db);
+    query.prepare("DELETE FROM EventRelations WHERE father_id = :father_id and child_id = :child_id");
+    query.bindValue(":father_id", QString::fromStdString(father->getId()));
+    query.bindValue(":child_id", QString::fromStdString(son->getId()));
 
     if (!query.exec()) {
         qDebug() << "deleventcate error: " << query.lastError();

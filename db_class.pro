@@ -10,6 +10,7 @@ CONFIG += c++17
 
 SOURCES += \
     event.cpp \
+    gpt.cpp \
     main.cpp \
     databasemanager.cpp \
     mapper.cpp \
@@ -21,6 +22,7 @@ HEADERS += \
     connect.h \
     databasemanager.h \
     event.h \
+    gpt.h \
     mapper.h \
     serverthread.h \
     time_convert.h \
@@ -36,6 +38,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 QT +=widgets gui
 QT += core gui sql
+QT += network
 
 INCLUDEPATH += C:/dev/vcpkg/installed/x86-windows/include
 

@@ -1,7 +1,7 @@
 #include"Event.h"
 #include"databaseManager.h"
 #include<ctime>
-
+#include "gpt.h"
 Event::Event(bool init,DatabaseManager* dbm, const std::string& id, const std::string& title, const std::tm& time,
              const std::string& description, const int& urgency, const int& kind_of_event):
     dbm(dbm),
@@ -58,7 +58,7 @@ bool Event::setInterval(int interval) {
 std::tm Event::getDeadline() const
 {
     tm error_tm;
-    std::cout << "error...\n";
+    std::cout << "get ddl...\n";
     return error_tm;
 }
 bool Event::setDeadline(const std::tm& deadline) {
@@ -66,7 +66,7 @@ bool Event::setDeadline(const std::tm& deadline) {
 }
 std::set<Event*> Event::getSubEvents() const {
     std::set<Event*> s;
-    std::cout << "error...\n";
+    std::cout << "get sub...\n";
     return s;
 }
 bool Event::addSubEvent(Event* event) {
@@ -77,7 +77,7 @@ bool Event::deleteSubEvent(Event* event) {
 }
 std::set<Event*>Event::getFatherEvent() const {
     std::set<Event*> s;
-    std::cout << "error...\n";
+    std::cout << "get father...\n";
     return s;
 }
 bool Event::addFatherEvent(Event* event) {
@@ -261,11 +261,11 @@ bool ProjectEvent:: addFatherEvent(Event* event){
     return true;
 }
 bool ProjectEvent:: deleteFatherEvent(Event* event){
-    if(fatherEvents.find(event)==subEvents.end()){
+    if(fatherEvents.find(event)==fatherEvents.end()){
         return 0;
     }
-    subEvents.erase(event);
-    dbm->addeventevent(event,this);
+    fatherEvents.erase(event);
+    dbm->deleventevent(event,this);
     return true;
 }
 
@@ -396,7 +396,58 @@ void Calendar:: displayEvent(Event* event) const{
 std::set<Event*>& Calendar:: getAllEvents(){
     return events;
 }
-
+QString Calendar::getClosestId(QString name){
+    int dp[255][255];
+    int min_len = 99999999;
+    QString min_len_id;
+    for (Event * task :getAllEvents())
+    {
+        memset(dp,0,sizeof(dp));
+        std::string the_name = task->getTitle();
+        for (int i=0;i<=name.length();i++)
+        {
+            for (int j=0;j<=int(the_name.size());j++)
+            {
+                if (i==0)
+                {
+                    dp[i][j]=j;
+                }
+                else if (j==0)
+                {
+                    dp[i][j]=i;
+                }
+                else
+                {
+                    int dp_min=99999999;
+                    if (the_name[j-1]==name[i-1])
+                    {
+                        dp_min = dp_min<dp[i-1][j-1]?dp_min: dp[i-1][j-1];
+                    }
+                    else
+                    {
+                        dp_min = dp_min<(dp[i-1][j-1]+1)?dp_min: (dp[i-1][j-1]+1);
+                    }
+                    dp_min = dp_min<(dp[i][j-1]+1)?dp_min: (dp[i][j-1]+1);
+                    dp_min = dp_min<(dp[i-1][j]+1)?dp_min: (dp[i-1][j]+1);
+                    dp[i][j] = dp_min;
+                }
+            }
+        }
+        qDebug()<<"CMP res:"<<dp[name.length()][int(the_name.size())];
+        if (dp[name.length()][int(the_name.size())]<min_len){
+            min_len = dp[name.length()][int(the_name.size())];
+            min_len_id = QString::fromStdString(task->getId());
+        }
+    }
+    if ((double)(min_len)/double(name.length())<0.3)
+    {
+        return min_len_id;
+    }
+    else
+    {
+        return CANNOT_FIND;
+    }
+}
 
 
 

@@ -176,7 +176,7 @@ bool DatabaseManager::init_db_relations()
             Event * parent_p = event_map->getEvent(parent_id);
             Event * child_p = event_map->getEvent(child_id);
             parent_p->addSubEvent(child_p);
-            parent_p->addFatherEvent(parent_p);
+            child_p->addFatherEvent(parent_p);
         }
         return true;
     }
@@ -603,7 +603,7 @@ bool DatabaseManager::addeventevent(Event* father,Event * son)
         return false;
     }
     QSqlQuery query(db);
-    query.prepare("INSERT INTO EventRelations (father_id, child_id) VALUES (:father_id, :child_id)");
+    query.prepare("INSERT IGNORE INTO EventRelations (parent_id, child_id) VALUES (:father_id, :child_id)");
     query.bindValue(":father_id", QString::fromStdString(father->getId()));
     query.bindValue(":child_id", QString::fromStdString(son->getId()));
 
@@ -620,10 +620,10 @@ bool DatabaseManager::deleventevent(Event* father,Event * son){
         return false;
     }
     QSqlQuery query(db);
-    query.prepare("DELETE FROM EventRelations WHERE father_id = :father_id and child_id = :child_id");
+    query.prepare("DELETE FROM EventRelations WHERE parent_id =:father_id and child_id =:child_id");
     query.bindValue(":father_id", QString::fromStdString(father->getId()));
     query.bindValue(":child_id", QString::fromStdString(son->getId()));
-
+    //qDebug()<<"DB del relations"<<QString::fromStdString(father->getId())<<" "<<QString::fromStdString(son->getId());
     if (!query.exec()) {
         qDebug() << "deleventcate error: " << query.lastError();
         return false;

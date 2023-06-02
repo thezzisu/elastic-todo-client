@@ -174,6 +174,7 @@ public:
     std::set<Event*>& getAllEvents();
     std::string getId() const;
     void setId(const std::string& id);
+    QString getClosestId(QString name);
 private:
     //����ʱ������
     std::string id;
